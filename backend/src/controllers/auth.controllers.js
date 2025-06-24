@@ -121,4 +121,19 @@ export const logout = async (req, res) => {
   }
 };
 
-export const check = async (req, res) => {};
+export const check = async (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      message: "User is authenticated",
+      user: req.user,
+    });
+  } catch (error) {
+    console.error("Error checking user authentication:", error);
+    res
+      .status(500)
+      .json({
+        error: "Internal server error for checking user authentication",
+      });
+  }
+};

@@ -37,6 +37,7 @@ export const register = async (req, res) => {
     });
 
     res.status(201).json({
+      success: true,
       message: "User registered successfully",
       user: {
         id: newUser.id,
@@ -54,8 +55,70 @@ export const register = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {};
+export const login = async (req, res) => {
+  const { email, password } = req.body;
 
-export const logout = async (req, res) => {};
+  try {
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "7d",
+    });
+
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== "development",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User logged in successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.UserRole,
+        image: user.image,
+      },
+    });
+  } catch (error) {
+    console.error("Error logging in user:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error for logging in user" });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== "development",
+      sameSite: "strict",
+    });
+    res
+      .status(200)
+      .json({ success: true, message: "User logged out successfully" });
+  } catch (error) {
+    console.error("Error logging out user:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error for logging out user" });
+  }
+};
 
 export const check = async (req, res) => {};

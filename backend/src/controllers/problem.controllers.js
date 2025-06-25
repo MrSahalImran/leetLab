@@ -1,5 +1,9 @@
 import { db } from "../libs/db.js";
-import { getJudge0LanguageId, submitBatch } from "../libs/judge0.lib.js";
+import {
+  getJudge0LanguageId,
+  submitBatch,
+  pollBatchResults,
+} from "../libs/judge0.lib.js";
 
 export const createProblem = async (req, res) => {
   const {
@@ -8,7 +12,7 @@ export const createProblem = async (req, res) => {
     difficulty,
     tags,
     examples,
-    contraints,
+    constraints,
     testCases,
     codeSnippets,
     referenceSolutions,
@@ -43,7 +47,7 @@ export const createProblem = async (req, res) => {
 
       const results = await pollBatchResults(tokens);
 
-      for (let i = 0; i < results.lenght; i++) {
+      for (let i = 0; i < results.length; i++) {
         const result = results[i];
 
         if (result.status.id !== 3) {
@@ -52,30 +56,32 @@ export const createProblem = async (req, res) => {
           });
         }
       }
-
-      const newProblem = await db.problem.create({
-        data: {
-          title,
-          description,
-          difficulty,
-          tags,
-          examples,
-          contraints,
-          testCases,
-          codeSnippets,
-          referenceSolutions,
-          userId: req.user.id,
-        },
-      });
-
-      return res.status(201).json({
-        message: "Problem created successfully.",
-        problem: newProblem,
-      });
     }
+
+    const newProblem = await db.problem.create({
+      data: {
+        title,
+        description,
+        difficulty,
+        tags,
+        examples,
+        constraints,
+        testCases,
+        codeSnippets,
+        referenceSolutions,
+        userId: req.user.id,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Problem created successfully.",
+      problem: newProblem,
+    });
   } catch (error) {
     return res.status(500).json({
-      error: "Internal Server Error: Failed to process reference solutions.",
+      error:
+        "Internal Server Error: Failed to process reference solutions." +
+        error.message,
     });
   }
 };

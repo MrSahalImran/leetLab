@@ -45,7 +45,7 @@ model Problem {
   tags               String[]
   userId             String
   examples           Json
-  contraints         String
+  constraints        String
   hints              String?
   editorial          String?
   testCases          Json

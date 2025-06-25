@@ -2,9 +2,9 @@ import axios from "axios";
 
 export const getJudge0LanguageId = (language) => {
   const languageMap = {
-    Python: 71,
-    JavaScript: 63,
-    Java: 62,
+    PYTHON: 71,
+    JAVASCRIPT: 63,
+    JAVA: 62,
   };
   return languageMap[language.toUpperCase()] || null;
 };

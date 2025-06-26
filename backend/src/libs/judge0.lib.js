@@ -15,7 +15,6 @@ export const submitBatch = async (submissions) => {
     { submissions }
   );
 
-  console.log("Batch submission response:", data);
   return data;
 };
 
@@ -40,7 +39,6 @@ export const pollBatchResults = async (tokens) => {
     );
 
     if (isAllDone) {
-      console.log("All submissions processed:", results);
       return results;
     }
 

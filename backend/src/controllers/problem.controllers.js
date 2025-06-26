@@ -20,6 +20,7 @@ export const createProblem = async (req, res) => {
 
   if (req.user.role !== "ADMIN") {
     return res.status(403).json({
+      success: false,
       error: "Forbidden: You do not have permission to create a problem.",
     });
   }
@@ -30,6 +31,7 @@ export const createProblem = async (req, res) => {
 
       if (!languageId) {
         return res.status(400).json({
+          success: false,
           error: `Invalid language: ${language}. Supported languages are Python, JavaScript, and Java.`,
         });
       }
@@ -49,9 +51,11 @@ export const createProblem = async (req, res) => {
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
+        console.log("result ----", result);
 
         if (result.status.id !== 3) {
           return res.status(400).json({
+            success: false,
             error: `Testcase ${i + 1} failed for language ${language}.`,
           });
         }
@@ -74,11 +78,13 @@ export const createProblem = async (req, res) => {
     });
 
     return res.status(201).json({
+      success: true,
       message: "Problem created successfully.",
       problem: newProblem,
     });
   } catch (error) {
     return res.status(500).json({
+      success: false,
       error:
         "Internal Server Error: Failed to process reference solutions." +
         error.message,
@@ -86,10 +92,101 @@ export const createProblem = async (req, res) => {
   }
 };
 
-export const getAllProblems = async (req, res) => {};
+export const getAllProblems = async (req, res) => {
+  try {
+    const problems = await db.problem.findMany();
 
-export const getProblemById = async (req, res) => {};
+    if (!problems || problems.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "No problems found." });
+    }
 
+    res.status(200).json({
+      success: true,
+      message: "Problems fetched successfully.",
+      problems: problems,
+    });
+  } catch (error) {
+    console.error("Error fetching problems:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error: Failed to fetch problems.",
+    });
+  }
+};
+
+export const getProblemById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const problems = await db.problem.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!problems) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Problem not found." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Problem fetched successfully.",
+      problem: problems,
+    });
+  } catch (error) {
+    console.error("Error fetching problem:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error: Failed to fetch problem.",
+    });
+  }
+};
+
+// TODO
 export const updateProblem = async (req, res) => {};
 
-export const deleteProblem = async (req, res) => {};
+export const deleteProblem = async (req, res) => {
+  const { id } = req.params;
+
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({
+      success: false,
+      error: "Forbidden: You do not have permission to delete a problem.",
+    });
+  }
+
+  try {
+    const problem = await db.problem.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!problem) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Problem not found." });
+    }
+
+    await db.problem.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Problem deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting problem:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error: Failed to delete problem.",
+    });
+  }
+};
